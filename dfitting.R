@@ -52,11 +52,11 @@ temp = seq(from = 0, to = 28, by = 0.0001)
 gamdis = list()
 thgam = list()
 for(i in 1:12){
-  gamdis[[i]] = lmom::pelgam(lmom = lmoments[[i]]) #L3 = 0
+  gamdis[[i]] = lmom::pelgam(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
   thgam[[i]] = lmom::cdfgam(x = temp, para = gamdis[[i]])
 }
 
-# Plot empirical and theoretical CDF of the time series by each month ----
+# Plot empirical and theoretical CDF of the last 6 time series by each month ----
 layout_matrix <- matrix(1:6, ncol = 3) 
 layout(layout_matrix)
 for(i in 7:12){
@@ -65,4 +65,5 @@ for(i in 7:12){
   lines(temp, thgam[[i]], col='magenta', lwd =3)
 }
 
-
+#create a time series expressing the mean Nile River supplies for each year ----
+ymaindata = xts::apply.yearly(x = maindata, mean)
