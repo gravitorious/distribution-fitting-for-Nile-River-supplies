@@ -27,9 +27,9 @@ maindata = alldata[paste(startday, endDay, sep = "/")]
 #plot(maindata)
 
 # Calculate mean, standard deviation and skewness for each month ----
-means = c()
-stds = c()
-skwns = c()
+means = rep(NA, 12)
+stds = rep(NA, 12)
+skwns = rep(NA, 12)
 
 for(i in 1:12){
   sample = get_month(maindata, i, 1)
@@ -86,25 +86,3 @@ for(i in 7:12){
   lines(temp, thwei[[i]], col='blue', lwd =3)
 }
 
-# Fit the lognormal, weibull and gamma distributions for month 9 with fitdistrplus library
-sample3 = get_month(maindata, 9, 1)
-fitGamma= fitdist(data = sample3, distr = 'gamma', method = 'mle') #gamma
-
-fitWei = fitdist(data = sample3, distr = 'weibull', method = 'mle') #weibull
-
-fitLnorm = fitdist(data = sample3, distr = 'lnorm', method = 'mle') #lognormal
-
-Fits=list()
-Fits[[1]] = fitGamma
-Fits[[2]] = fitWei
-Fits[[3]] = fitLnorm
-fitdistrplus::cdfcomp(ft = Fits)
-
-# print the Akaike information criterion (AIC) value for each distribution
-#AIC = 2k – 2(Log-Likelihood) where k is the number of parameters.
-print(paste("The AIC for Gamma distribution is:", fitGamma$aic))
-print(paste("The AIC for Weibull distribution is:", fitWei$aic))
-print(paste("The AIC for LogNormal distribution is:", fitLnorm$aic))
-summary(fitGamma)
-summary(fitWei)
-summary(fitLnorm)
