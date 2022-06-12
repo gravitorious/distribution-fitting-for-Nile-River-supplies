@@ -7,7 +7,7 @@ EmpCdf = function(data, i, plot=1) {
   
   if (plot==1) {
     plot(xx, cdf, type='p', main=paste('Empirical CDF for month:', i), 
-         xlab='m^3 10^9', ylab='Prob.', pch = 19, xlim = c(0, 28) )
+         xlab='m^3 10^9', ylab='Prob.', pch = 19, xlim = c(0, max( dfcdf[, 2])+1) )
   }
   
   return(dfcdf)

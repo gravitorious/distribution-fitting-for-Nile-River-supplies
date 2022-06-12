@@ -48,41 +48,53 @@ for(i in 1:12){
   ratiomom[[i]] = c(lmoments[[i]][2]/lmoments[[i]][1], lmoments[[i]][3]/lmoments[[i]][2]) #calculate the L-variation and L-skewness via L2/L1 and L3/L2
 }
 
+
+
+
+
 # Fit the gamma distribution to the data ----
-temp = seq(from = 0, to = 28, by = 0.0001)
+layout_matrix <- matrix(1:6, ncol = 3) 
+layout(layout_matrix)
+
+
+
+ #Vector of quantiles
 gamdis = list()
 thgam = list()
 for(i in 1:12){
+  sample = get_month(maindata, i, 1)
+  a = EmpCdf(sample, i, 0)
+  temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
   gamdis[[i]] = lmom::pelgam(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
-  thgam[[i]] = lmom::cdfgam(x = temp, para = gamdis[[i]])
+  thgam[[i]] = lmom::cdfgam(x=temp,para = gamdis[[i]])
 }
 
 # Plot empirical and theoretical CDF of the last 6 time series by each month ----
-layout_matrix <- matrix(1:6, ncol = 3) 
-layout(layout_matrix)
-for(i in 7:12){
+
+for(i in 1:6){
   sample = get_month(maindata, i, 1)
-  EmpCdf(sample, i)
-  lines(temp, thgam[[i]], col='magenta', lwd =3)
+  a = EmpCdf(sample, i)
+  temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
+  lines(temp, thgam[[i]], col='magenta', lwd = 3)
 }
 
 #create a time series expressing the mean Nile River supplies for each year ----
 ymaindata = xts::apply.yearly(x = maindata, mean)
 
 
-# Fit the Weibull distribution to the data
-temp2 = seq(from = 0, to = 28, by = 0.0001)
-weidis = list()
-thwei = list()
-for(i in 1:12){
-  weidis[[i]] = lmom::pelwei(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
-  thwei[[i]] = lmom::cdfwei(x = temp2, para = weidis[[i]])
-}
-layout_matrix2 <- matrix(1:6, ncol = 3) 
-layout(layout_matrix2)
-for(i in 7:12){
-  sample2 = get_month(maindata, i, 1)
-  EmpCdf(sample2, i)
-  lines(temp, thwei[[i]], col='blue', lwd =3)
-}
+# Fit the Weibull distribution to the data ----
+#temp2 = seq(from = 0, to = 28, by = 0.0001)
+#weidis = list()
+#thwei = list()
+#for(i in 1:12){
+#  weidis[[i]] = lmom::pelwei(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
+#  thwei[[i]] = lmom::cdfwei(x = temp2, para = weidis[[i]])
+#}
+#layout_matrix2 <- matrix(1:6, ncol = 3) 
+#layout(layout_matrix2)
+#for(i in 7:12){
+#  sample2 = get_month(maindata, i, 1)
+#  EmpCdf(sample2, i)
+#  lines(temp, thwei[[i]], col='blue', lwd =3)
+#}
 
