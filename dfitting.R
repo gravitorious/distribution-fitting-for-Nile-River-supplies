@@ -13,6 +13,14 @@ library(fitdistrplus)
 source("get_month.R")
 source("EmpCdf.R")
 
+
+# create folder that we will store plots
+foldername = "gammadistr"
+dir.create(foldername)
+yearlyfolder = "yearlyfolder"
+dir.create(yearlyfolder)
+
+
 # Load time series and create the appropriate xts object----
 fileName = "NileData_BCM.txt"
 filedata = read.csv(file = fileName)
@@ -69,18 +77,45 @@ for(i in 1:12){
   thgam[[i]] = lmom::cdfgam(x=temp,para = gamdis[[i]])
 }
 
-# Plot empirical and theoretical CDF of the last 6 time series by each month ----
-
+# Plot empirical and theoretical CDF by each month ----
+#first 6 months
 for(i in 1:6){
   sample = get_month(maindata, i, 1)
+  #plot to file
+  plotfile = gsub(" ", "", paste(foldername, "/Month", i, ".png", sep = ""))
+  png(file=plotfile, width=600, height=350)
   a = EmpCdf(sample, i)
   temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
+  lines(temp, thgam[[i]], col='magenta', lwd = 3)
+  dev.off()
+  #plot to screen
+  a = EmpCdf(sample, i)
+  lines(temp, thgam[[i]], col='magenta', lwd = 3)
+}
+
+#the next 6 months
+layout_matrix2 <- matrix(1:6, ncol = 3) 
+layout(layout_matrix2)
+for(i in 7:12){
+  sample = get_month(maindata, i, 1)
+  #plot to file
+  plotfile = gsub(" ", "", paste(foldername, "/Month", i, ".png", sep = ""))
+  png(file=plotfile, width=600, height=350)
+  a = EmpCdf(sample, i)
+  temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
+  lines(temp, thgam[[i]], col='magenta', lwd = 3)
+  dev.off()
+  #plot to screen
+  a = EmpCdf(sample, i)
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
 }
 
 #create a time series expressing the mean Nile River supplies for each year ----
 ymaindata = xts::apply.yearly(x = maindata, mean)
-
+plotfile = gsub(" ", "", paste(yearlyfolder, "/yearlyplot.png", sep = ""))
+png(file=plotfile, width=600, height=350)
+plot(ymaindata)
+dev.off()
 
 # Fit the Weibull distribution to the data ----
 #temp2 = seq(from = 0, to = 28, by = 0.0001)
