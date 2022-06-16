@@ -21,6 +21,9 @@ dir.create(foldername)
 wfoldername = "weibulldistr"
 dir.create(wfoldername)
 
+errorfolder = 'errors'
+dir.create(errorfolder)
+
 
 # Load time series and create the appropriate xts object----
 fileName = "NileData_BCM.txt"
@@ -71,6 +74,8 @@ for(i in 1:12){
   thgam[[i]] = lmom::cdfgam(x=temp,para = gamdis[[i]])
 }
 
+dtfm = list() #list with dataframes for each month for theoritical distr of gamma function
+
 # Plot empirical and theoretical CDF by each month ----
 for(i in 1:6){
   sample = get_month(maindata, i, 1)
@@ -84,6 +89,10 @@ for(i in 1:6){
   #plot to screen
   a = EmpCdf(sample, i, "Gamma")
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
+  
+  #save to dataframe
+  dtfm[[i]] = data.frame(temp, thgam[[i]])
+  colnames(dtfm[[i]]) = c('x', 'prob')
 }
 
 
@@ -101,8 +110,12 @@ for(i in 7:12){
   #plot to screen
   a = EmpCdf(sample, i, "Gamma")
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
+  
+  
+  #save to dataframe
+  dtfm[[i]] = data.frame(temp, thgam[[i]])
+  colnames(dtfm[[i]]) = c('x', 'prob')
 }
-
 
 
 #create a time series expressing the mean Nile River supplies for each year ----
@@ -110,9 +123,10 @@ ymaindata = xts::apply.yearly(x = maindata, mean)
 
 
 # Fit the Weibull distribution to the data ----
-
+gdtfm = list() #list with dataframes for each month for theoritical distr of gamma function
 weidis = list()
 thwei = list()
+temp2 = NA
 for(i in 1:12){
   sample = get_month(maindata, i, 1)
   a = EmpCdf(sample, i, "Weibull", 0)
@@ -120,6 +134,7 @@ for(i in 1:12){
   weidis[[i]] = lmom::pelwei(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
   thwei[[i]] = lmom::cdfwei(x = temp2, para = weidis[[i]])
 }
+
 #save plots
 # Plot empirical and theoretical CDF by each month ----
 for(i in 1:12){
@@ -131,5 +146,83 @@ for(i in 1:12){
   temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
   lines(temp, thwei[[i]], col='blue', lwd = 3)
   dev.off()
+  #save to dataframe
+  gdtfm[[i]] = data.frame(temp, thwei[[i]])
+  colnames(gdtfm[[i]]) = c('x', 'prob')
 }
+
+#the following code would be better to be a function...
+#counting errors for gamma distribution
+gammaerrors = rep(NA,12)
+for(j in 1:12){
+  sample = get_month(maindata, j, 1)
+  empcdf = EmpCdf(sample, j, "Gamma", 0)
+  sum = 0
+  for(i in 1:length(sample)){ #74
+    empvalue = empcdf$u[empcdf$x == sample[i]]
+    if(length(empvalue) > 1){
+      empvalue = empvalue[length(empvalue)]
+    }
+    thvalue = dtfm[[j]]$prob[dtfm[[j]]$x == signif(sample[i], digits = 3)]
+    #check if thvalue is empty. Problem with compare floating point numbers. 
+    #How can we solve that?
+    sample[i] = signif(sample[i], digits = 5)
+    try = 0
+    while(length(thvalue) == 0){
+      thvalue = dtfm[[j]]$prob[dtfm[[j]]$x == sample[i]+try] #try the next one
+      try = try + 0.001
+    }
+    thvalue = signif(thvalue, digits = 4)
+    empvalue = signif(empvalue, digits = 4)
+    sum = sum + signif((thvalue - empvalue)^2, digits = 6)
+  }
+  
+  gammaerror = sqrt(sum)
+  gammaerror = signif(gammaerror, digits = 6)
+  gammaerrors[j] = gammaerror
+  #message('Error for month: ', j, 'is: ', gammaerror)
+}
+
+
+#counting errors for weibull distribution
+weibullerrors = rep(NA,12)
+for(j in 1:12){
+  sample = get_month(maindata, j, 1)
+  empcdf = EmpCdf(sample, j, "Weibull", 0)
+  sum = 0
+  for(i in 1:length(sample)){ #74
+    empvalue = empcdf$u[empcdf$x == sample[i]]
+    if(length(empvalue) > 1){
+      empvalue = empvalue[length(empvalue)]
+    }
+    thvalue = gdtfm[[j]]$prob[gdtfm[[j]]$x == signif(sample[i], digits = 3)]
+    #check if thvalue is empty. Problem with compare floating point numbers. 
+    #How can we solve that?
+    sample[i] = signif(sample[i], digits = 5)
+    try = 0
+    while(length(thvalue) == 0){
+      thvalue = gdtfm[[j]]$prob[gdtfm[[j]]$x == sample[i]+try] #try the next one
+      try = try + 0.001
+    }
+    thvalue = signif(thvalue, digits = 4)
+    empvalue = signif(empvalue, digits = 4)
+    sum = sum + signif((thvalue - empvalue)^2, digits = 6)
+  }
+  
+  weibullerror = sqrt(sum)
+  weibullerror = signif(weibullerror, digits = 6)
+  weibullerrors[j] = weibullerror
+  message('Error for month: ', j, 'is: ', weibullerror)
+}
+
+layout_matrix3 <- matrix(1:1) 
+layout(layout_matrix3)
+plotfile = gsub(" ", "", paste(errorfolder, "/errors.png"))
+png(file=plotfile, width=600, height=350)
+
+months = 1:12
+plot(months,gammaerrors, type = 'l' ,col="red", xlab = 'months', ylab = 'errors')
+lines(months,weibullerrors,col="green")
+
+dev.off()
 
