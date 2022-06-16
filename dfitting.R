@@ -17,14 +17,14 @@ source("EmpCdf.R")
 # create folder that we will store plots
 foldername = "gammadistr"
 dir.create(foldername)
-yearlyfolder = "yearlyfolder"
-dir.create(yearlyfolder)
+
+wfoldername = "weibulldistr"
+dir.create(wfoldername)
 
 
 # Load time series and create the appropriate xts object----
 fileName = "NileData_BCM.txt"
 filedata = read.csv(file = fileName)
-head(rownames(filedata))
 alldata = xts(x = filedata$data, order.by = as.Date(filedata$Date))
 colnames(alldata) = "data"
 #choose start and end day
@@ -55,45 +55,38 @@ for(i in 1:12){
   lmoments[[i]] = lmom::samlmu(x = sample, nmom = 3, ratios = F) #calculate L1, L2, L3
   ratiomom[[i]] = c(lmoments[[i]][2]/lmoments[[i]][1], lmoments[[i]][3]/lmoments[[i]][2]) #calculate the L-variation and L-skewness via L2/L1 and L3/L2
 }
-
-
-
-
-
 # Fit the gamma distribution to the data ----
 layout_matrix <- matrix(1:6, ncol = 3) 
 layout(layout_matrix)
 
 
 
- #Vector of quantiles
 gamdis = list()
 thgam = list()
 for(i in 1:12){
   sample = get_month(maindata, i, 1)
-  a = EmpCdf(sample, i, 0)
+  a = EmpCdf(sample, i, "Gamma", 0)
   temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
   gamdis[[i]] = lmom::pelgam(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
   thgam[[i]] = lmom::cdfgam(x=temp,para = gamdis[[i]])
 }
 
 # Plot empirical and theoretical CDF by each month ----
-#first 6 months
 for(i in 1:6){
   sample = get_month(maindata, i, 1)
   #plot to file
   plotfile = gsub(" ", "", paste(foldername, "/Month", i, ".png", sep = ""))
   png(file=plotfile, width=600, height=350)
-  a = EmpCdf(sample, i)
+  a = EmpCdf(sample, i, "Gamma")
   temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
   dev.off()
   #plot to screen
-  a = EmpCdf(sample, i)
+  a = EmpCdf(sample, i, "Gamma")
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
 }
 
-#the next 6 months
+
 layout_matrix2 <- matrix(1:6, ncol = 3) 
 layout(layout_matrix2)
 for(i in 7:12){
@@ -101,35 +94,42 @@ for(i in 7:12){
   #plot to file
   plotfile = gsub(" ", "", paste(foldername, "/Month", i, ".png", sep = ""))
   png(file=plotfile, width=600, height=350)
-  a = EmpCdf(sample, i)
+  a = EmpCdf(sample, i, "Gamma")
   temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
   dev.off()
   #plot to screen
-  a = EmpCdf(sample, i)
+  a = EmpCdf(sample, i, "Gamma")
   lines(temp, thgam[[i]], col='magenta', lwd = 3)
 }
 
+
+
 #create a time series expressing the mean Nile River supplies for each year ----
 ymaindata = xts::apply.yearly(x = maindata, mean)
-plotfile = gsub(" ", "", paste(yearlyfolder, "/yearlyplot.png", sep = ""))
-png(file=plotfile, width=600, height=350)
-plot(ymaindata)
-dev.off()
+
 
 # Fit the Weibull distribution to the data ----
-#temp2 = seq(from = 0, to = 28, by = 0.0001)
-#weidis = list()
-#thwei = list()
-#for(i in 1:12){
-#  weidis[[i]] = lmom::pelwei(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
-#  thwei[[i]] = lmom::cdfwei(x = temp2, para = weidis[[i]])
-#}
-#layout_matrix2 <- matrix(1:6, ncol = 3) 
-#layout(layout_matrix2)
-#for(i in 7:12){
-#  sample2 = get_month(maindata, i, 1)
-#  EmpCdf(sample2, i)
-#  lines(temp, thwei[[i]], col='blue', lwd =3)
-#}
+
+weidis = list()
+thwei = list()
+for(i in 1:12){
+  sample = get_month(maindata, i, 1)
+  a = EmpCdf(sample, i, "Weibull", 0)
+  temp2 = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
+  weidis[[i]] = lmom::pelwei(lmom = lmoments[[i]]) #we pass the first 3 moments, but L3 is not used
+  thwei[[i]] = lmom::cdfwei(x = temp2, para = weidis[[i]])
+}
+#save plots
+# Plot empirical and theoretical CDF by each month ----
+for(i in 1:12){
+  sample = get_month(maindata, i, 1)
+  #plot to file
+  plotfile = gsub(" ", "", paste(wfoldername, "/Month", i, ".png", sep = ""))
+  png(file=plotfile, width=600, height=350)
+  a = EmpCdf(sample, i, "Weibull")
+  temp = seq(from = 0, to = max(a[, 2])+1, by = 0.0001)
+  lines(temp, thwei[[i]], col='blue', lwd = 3)
+  dev.off()
+}
 
