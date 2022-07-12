@@ -1,5 +1,5 @@
 Given the monthly time series of supplies in billions of cubic meters of the Nile River for the period 1/1/1870 to 1/12/1945 we fit two different distributions, the gamma, and Weibull, for each month. For fitting and estimating the parameters, we use the λ-moments method (you can read more about this method at https://www.jstor.org/stable/2345653). Finally, we compare the two distributions by measuring the root mean square error and plotting the errors. 
-We represt time series using xts packet.
+We represent time series using xts packet.
 
 
 ```
